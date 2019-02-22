@@ -22,11 +22,14 @@ import           Protolude                      ( IO
                                                 , putStrLn
                                                 , (<>)
                                                 , hush
+                                                , Eq
+                                                , Show
                                                 )
 import Class (ReadBody, readBody)
 import           Control.Arrow
 import qualified Control.Exception             as E
 import           Control.Lens
+import Control.Monad.Error
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Maybe      ( MaybeT(..) )
 import           Control.Monad.Trans.Except     ( ExceptT(..)
@@ -41,6 +44,7 @@ import Data.Map.Strict (fromList)
 import qualified Data.Text                     as TS
 import           Data.Text.Lazy                 ( unpack )
 import           Data.ByteString                ( ByteString )
+import Data.ByteString.Char8 (pack)
 import           Data.String                    ( String )
 import           Domain                         ( newUser
                                                 , createAccessToken
@@ -113,8 +117,14 @@ app env = void $ runMaybeT $ do
 {- A MonadTrans-like Monad for our application.
   Its kind is too refined however to allow this to have a MonadTrans instance
 -}
-newtype WebM a = WebM { runWebM :: ReaderT AppState IO a }
-  deriving (Applicative, Functor, Monad, MonadIO, MonadReader AppState)
+newtype WebM a = WebM { runWebM :: ReaderT AppState (ErrorT Except IO) a }
+  deriving (Applicative, Functor, Monad, MonadIO, MonadReader AppState, MonadError Except)
+
+data Except = Other ByteString
+  deriving (Show, Eq)
+
+instance Error Except where
+  strMsg = Other <<< pack
 
 webM :: MonadTrans t => WebM a -> t WebM a
 webM = lift
