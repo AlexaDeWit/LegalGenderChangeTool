@@ -52,6 +52,7 @@ library
                      , hasql-transaction
                      , string-qq
                      , blaze-html
+                     , scotty-cookie
   hs-source-dirs:      app
   ghc-options:         -Wall -Werror
   default-language:    Haskell2010

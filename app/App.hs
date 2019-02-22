@@ -4,7 +4,6 @@ module App where
 
 import           Protolude                      ( IO
                                                 , ($)
-                                                , (.)
                                                 , (>>=)
                                                 , ($>)
                                                 , (^)
@@ -23,6 +22,7 @@ import           Protolude                      ( IO
                                                 , putStrLn
                                                 , (<>)
                                                 )
+import           Control.Arrow
 import qualified Control.Exception             as E
 import           Control.Lens
 import           Control.Monad.Reader
@@ -33,13 +33,16 @@ import           Control.Monad.Trans.Except     ( ExceptT(..)
 import           Control.Monad.Trans            ( lift )
 import           Crypto.Classes.Exceptions      ( genBytes )
 import           Crypto                         ( verifyPassword
+                                                , signJwt
                                                 )
 import qualified Crypto.Argon2                 as Argon2
 import           Data.Default                   ( def )
+import qualified Data.Text                     as TS
 import           Data.Text.Lazy                 ( unpack )
 import           Data.ByteString                ( ByteString )
 import           Data.String                    ( String )
 import           Domain                         ( newUser
+                                                , createAccessToken
                                                 )
 import           Control.Concurrent.STM         ( atomically
                                                 , readTVarIO
@@ -57,6 +60,7 @@ import           Network.Wai.Middleware.Gzip    ( gzip )
 import           Network.HTTP.Types.Header      ( RequestHeaders )
 import           Network.HTTP.Types.Status
 import           Web.Scotty.Trans
+import           Web.Scotty.Cookie
 import           Types
 import qualified Conf                          as Conf
 import           Conf                           ( Environment(..) )
@@ -96,7 +100,7 @@ app env = void $ runMaybeT $ do
       migrationResult <- Schema.runMigrations
         (Conf.migrationsPath $ Conf.databaseConfig conf)
         conn
-      _                 <- either (fail . show) pure migrationResult
+      _                 <- either (fail <<< show) pure migrationResult
       eitherErrAppState <- runExceptT (generateInitialAppState conf)
       initialAppState   <- either E.throwIO return eitherErrAppState
       putStrLn ("Initial state established, starting scotty app" :: String)
@@ -174,7 +178,7 @@ app' pool logger = do
 
 nextBytes :: Int -> ActionT' ByteString
 nextBytes byteCount = do
-  tVar <- webM $ asks _appStateCryptoRandomGen
+  tVar       <- webM $ asks _appStateCryptoRandomGen
   currentGen <- liftIO $ readTVarIO tVar
   let (salt, nextGen) = genBytes byteCount currentGen
   liftIO $ atomically $ modifyTVar' tVar (const nextGen)
@@ -183,3 +187,25 @@ nextBytes byteCount = do
 removeApiPrefix :: PathsAndQueries -> RequestHeaders -> PathsAndQueries
 removeApiPrefix ("api" : tail, queries) _ = (tail, queries)
 removeApiPrefix paq                     _ = paq
+
+sessionCookieName :: TS.Text
+sessionCookieName = "session"
+
+setUserSession :: Schema.User -> ActionT' ()
+setUserSession user = do
+  token           <- liftIO $ createAccessToken user
+  tokenSigningKey <- webM (asks _appStateSigningKey)
+  let signedJwt = signJwt tokenSigningKey token
+  either
+    (const $ raise $ stringError "Internal Cryptographic Failure")
+    (\st ->
+      setSimpleCookie sessionCookieName $ st ^. concatenatedSessionTokenText
+    )
+    signedJwt
+
+{-
+getUserSession :: ActionT' (Maybe AccessToken)
+getUserSession = do
+  cookie <- getCookie sessionCookieName
+  tokenSigningKey <- webM (asks _appStateSigningKey)
+-}

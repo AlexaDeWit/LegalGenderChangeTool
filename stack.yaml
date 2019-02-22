@@ -43,6 +43,7 @@ extra-deps:
   - argon2-1.3.0.1
   - hasql-migration-0.2.0
   - DRBG-0.5.5
+  - scotty-cookie-0.1.0.3
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

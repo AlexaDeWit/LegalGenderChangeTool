@@ -6,12 +6,14 @@ import           Protolude                      ( Eq
                                                 , ($)
                                                 , (<*>)
                                                 , (<$>)
+                                                , (<>)
                                                 , Generic
                                                 )
 import           Control.Lens.Combinators
-import           Control.Lens.TH                (makeClassy)
+import           Control.Lens.TH                ( makeClassy )
 import           Data.ByteString                ( ByteString )
 import           Data.Aeson
+import           Data.Aeson.Types               ( typeMismatch )
 import           Data.Text                      ( Text )
 import           Data.UUID                      ( UUID )
 import           Data.Time.Clock                ( UTCTime )
@@ -74,10 +76,19 @@ declareClassy [d|
     | Complete
     deriving (Eq, Show, Generic)
 
-  newtype SessionToken = SessionToken { sessionTokenBase64Content :: Base64Content }
+  newtype ConcatenatedSessionToken = ConcatenatedSessionToken { concatenatedSessionTokenText :: Text }
     deriving (Eq, Show, Generic)
 
   |]
+
+instance ToJSON AccessToken where
+  toJSON (AccessToken ti ui e) = object ["jti" .= ti, "sub" .= ui, "exp" .= e]
+  toEncoding (AccessToken ti ui e) =
+    pairs ("jti" .= ti <> "sub" .= ui <> "exp" .= e)
+instance FromJSON AccessToken where
+  parseJSON (Object v) =
+    AccessToken <$> v .: "jti" <*> v .: "sub" <*> v .: "exp"
+  parseJSON invalid = typeMismatch "AccessToken" invalid
 
 data AppState = AppState
   { _appStateCryptoRandomGen :: TVar (GenAutoReseed HashDRBG HashDRBG)
@@ -86,10 +97,9 @@ data AppState = AppState
   deriving (Generic)
 makeClassy ''AppState
 
-
 instance FromJSON RegisterUser where
-  parseJSON = withObject "loginUser" $ \o ->
-    RegisterUser <$> o .: "username" <*> o .: "password"
+  parseJSON = withObject "loginUser"
+    $ \o -> RegisterUser <$> o .: "username" <*> o .: "password"
 
 instance FromJSON LoginUser where
   parseJSON = withObject "loginUser"
