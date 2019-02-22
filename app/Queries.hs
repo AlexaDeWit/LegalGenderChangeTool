@@ -1,14 +1,14 @@
 module Queries where
 
-import Prelude
+import           Prelude
 import           Control.Lens
-import Schema
-import Types
-import Data.ByteString (ByteString)
-import Data.String.QQ
-import Hasql.Statement
-import qualified Hasql.Encoders as HE
-import qualified Hasql.Decoders as HD
+import           Schema
+import           Types
+import           Data.ByteString                ( ByteString )
+import           Data.String.QQ
+import           Hasql.Statement
+import qualified Hasql.Encoders                as HE
+import qualified Hasql.Decoders                as HD
 
 decodeTaskStatus :: HD.Value TaskStatus
 decodeTaskStatus = HD.enum f where
@@ -20,12 +20,12 @@ decodeTaskStatus = HD.enum f where
         _               -> Nothing
 
 encodeTaskStatus :: HE.Value TaskStatus
-encodeTaskStatus = HE.enum f where
+encodeTaskStatus = HE.enum f  where
     f ts = case ts of
-        New             -> "New"
-        NotNeeded       -> "NotNeeded"
-        PendingResult   -> "PendingResult"
-        Complete        -> "Complete"
+        New           -> "New"
+        NotNeeded     -> "NotNeeded"
+        PendingResult -> "PendingResult"
+        Complete      -> "Complete"
 
 findUserByUsername :: Statement Username (Maybe User)
 findUserByUsername = Statement sqlS encoder decoder True
