@@ -23,6 +23,7 @@ import           Protolude                      ( IO
                                                 , (<>)
                                                 , hush
                                                 )
+import Class (ReadBody, readBody)
 import           Control.Arrow
 import qualified Control.Exception             as E
 import           Control.Lens
@@ -36,6 +37,7 @@ import           Crypto.Classes.Exceptions      ( genBytes )
 import           Crypto
 import qualified Crypto.Argon2                 as Argon2
 import           Data.Default                   ( def )
+import Data.Map.Strict (fromList)
 import qualified Data.Text                     as TS
 import           Data.Text.Lazy                 ( unpack )
 import           Data.ByteString                ( ByteString )
@@ -207,3 +209,9 @@ getUserSession = do
   cookie          <- getCookie sessionCookieName
   tokenSigningKey <- webM (asks _appStateSigningKey)
   pure $ cookie >>= (verifyJwt tokenSigningKey >>> hush)
+
+fromParams :: ReadBody a => ActionT' (Either LT.Text a)
+fromParams = do
+  paramsMap <- params <&> fromList
+  pure $ readBody paramsMap
+

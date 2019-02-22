@@ -78,7 +78,7 @@ declareClassy [d|
 
   newtype ConcatenatedSessionToken = ConcatenatedSessionToken { concatenatedSessionTokenText :: Text }
     deriving (Eq, Show, Generic)
-
+  
   |]
 
 instance ToJSON AccessToken where

@@ -17,6 +17,7 @@ library
                      , Crypto
                      , Domain
                      , Queries
+                     , Class
   build-depends:       base >=4.6 && < 5
                      , wai >= 3.0.0 && <3.3
                      , wai-extra >=3.0.0 && < 3.3
@@ -25,6 +26,7 @@ library
                      , scotty
                      , clay
                      , configurator
+                     , containers
                      , data-default >= 0.7.1.1 && < 1.0
                      , text
                      , time
