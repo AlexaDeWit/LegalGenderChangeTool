@@ -19,7 +19,6 @@ findUserByUsername = Statement sqlS encoder decoder True
                     "userUuid",
                     "userUsername",
                     "userHashedPassword",
-                    "userPublicKey",
                     "userLastUpdated",
                     "userCreatedAt"
                 FROM
@@ -31,7 +30,6 @@ findUserByUsername = Statement sqlS encoder decoder True
             HD.rowMaybe
             $ User
             <$> HD.column HD.uuid
-            <*> HD.column HD.text
             <*> HD.column HD.text
             <*> HD.column HD.text
             <*> HD.column HD.timestamp
@@ -48,7 +46,6 @@ insertUser = Statement sqlS encoder decoder True
                     "userUuid",
                     "userUsername",
                     "userHashedPassword",
-                    "userPublicKey",
                     "userLastUpdated",
                     "userCreatedAt"
                 )
@@ -60,7 +57,6 @@ insertUser = Statement sqlS encoder decoder True
             contramap _userUuid (HE.param HE.uuid) <>
             contramap _userUsername (HE.param HE.text) <>
             contramap _userHashedPassword (HE.param HE.text) <>
-            contramap _userPublicKey (HE.param HE.text) <>
             contramap _userLastUpdated (HE.param HE.timestamp) <>
             contramap _userCreatedAt (HE.param HE.timestamp)
         decoder = HD.unit

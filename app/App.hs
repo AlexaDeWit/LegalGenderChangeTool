@@ -32,8 +32,7 @@ import           Control.Monad.Trans.Except     ( ExceptT(..)
                                                 )
 import           Control.Monad.Trans            ( lift )
 import           Crypto.Classes.Exceptions      ( genBytes )
-import           Crypto                         ( signJwt
-                                                , verifyPassword
+import           Crypto                         ( verifyPassword
                                                 )
 import qualified Crypto.Argon2                 as Argon2
 import           Data.Default                   ( def )
@@ -41,7 +40,6 @@ import           Data.Text.Lazy                 ( unpack )
 import           Data.ByteString                ( ByteString )
 import           Data.String                    ( String )
 import           Domain                         ( newUser
-                                                , createAccessToken
                                                 )
 import           Control.Concurrent.STM         ( atomically
                                                 , readTVarIO
@@ -155,7 +153,7 @@ app' pool logger = do
         let passwordVerificationResult =
               verifyPassword correctPassword providedPassword
         case passwordVerificationResult of
-          Argon2.Argon2Ok -> respondWithAuthToken user
+          Argon2.Argon2Ok -> status status200
           _               -> status status400
       _ -> status status400
 
@@ -172,13 +170,7 @@ app' pool logger = do
       Left err -> do
         putStrLn (show err :: ByteString)
         status status400
-      Right _ -> respondWithAuthToken user
-
-respondWithAuthToken :: Schema.User -> ActionT' ()
-respondWithAuthToken user = do
-  token           <- liftIO $ createAccessToken user
-  tokenSigningKey <- webM (asks _appStateSigningKey)
-  either (const (status status500)) json (signJwt tokenSigningKey token)
+      Right _ -> status status200
 
 nextBytes :: Int -> ActionT' ByteString
 nextBytes byteCount = do

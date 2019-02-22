@@ -10,9 +10,7 @@ import           Data.Time.LocalTime            ( utcToLocalTime
                                                 , utc
                                                 )
 import           Data.Time.Clock                ( getCurrentTime
-                                                , UTCTime(..)
                                                 )
-import           Data.Time.Calendar             ( addDays )
 import           System.Random                  ( randomIO )
 import           Crypto.Argon2                  ( Argon2Status )
 
