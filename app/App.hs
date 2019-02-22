@@ -21,6 +21,7 @@ import           Protolude                      ( IO
                                                 , MonadIO
                                                 , putStrLn
                                                 , (<>)
+                                                , hush
                                                 )
 import           Control.Arrow
 import qualified Control.Exception             as E
@@ -32,9 +33,7 @@ import           Control.Monad.Trans.Except     ( ExceptT(..)
                                                 )
 import           Control.Monad.Trans            ( lift )
 import           Crypto.Classes.Exceptions      ( genBytes )
-import           Crypto                         ( verifyPassword
-                                                , signJwt
-                                                )
+import           Crypto
 import qualified Crypto.Argon2                 as Argon2
 import           Data.Default                   ( def )
 import qualified Data.Text                     as TS
@@ -203,9 +202,8 @@ setUserSession user = do
     )
     signedJwt
 
-{-
 getUserSession :: ActionT' (Maybe AccessToken)
 getUserSession = do
-  cookie <- getCookie sessionCookieName
+  cookie          <- getCookie sessionCookieName
   tokenSigningKey <- webM (asks _appStateSigningKey)
--}
+  pure $ cookie >>= (verifyJwt tokenSigningKey >>> hush)
