@@ -5,3 +5,12 @@ CREATE TABLE "users" (
   "userLastUpdated" timestamp DEFAULT current_timestamp NOT NULL,
   "userCreatedAt" timestamp DEFAULT current_timestamp NOT NULL
 );
+
+CREATE TABLE "tasks" (
+  "taskUuid" uuid CONSTRAINT taskUuidPrimaryKey PRIMARY KEY,
+  "userUuid" uuid REFERENCES "users"("userUuid),
+  "taskId" varchar(64) NOT NULL,
+  "taskStatus" varchar(64) NOT NULL,
+  "taskLastUpdated" timestamp DEFAULT current_timestamp NOT NULL,
+  "taskCreatedAt" timestamp DEFAULT current_timestamp NOT NULL
+);

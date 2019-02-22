@@ -67,6 +67,13 @@ declareClassy [d|
   newtype SigningKey = SigningKey { signingKeyByteString :: ByteString }
     deriving (Eq, Show)
 
+  data TaskStatus
+    = New
+    | NotNeeded
+    | PendingResult
+    | Complete
+    deriving (Eq, Show, Generic)
+
   |]
 
 data AppState = AppState

@@ -10,6 +10,23 @@ import Hasql.Statement
 import qualified Hasql.Encoders as HE
 import qualified Hasql.Decoders as HD
 
+decodeTaskStatus :: HD.Value TaskStatus
+decodeTaskStatus = HD.enum f where
+    f t = case t of
+        "New"           -> Just New
+        "NotNeeded"     -> Just NotNeeded
+        "PendingResult" -> Just PendingResult
+        "Complete"      -> Just Complete
+        _               -> Nothing
+
+encodeTaskStatus :: HE.Value TaskStatus
+encodeTaskStatus = HE.enum f where
+    f ts = case ts of
+        New             -> "New"
+        NotNeeded       -> "NotNeeded"
+        PendingResult   -> "PendingResult"
+        Complete        -> "Complete"
+
 findUserByUsername :: Statement Username (Maybe User)
 findUserByUsername = Statement sqlS encoder decoder True
     where
