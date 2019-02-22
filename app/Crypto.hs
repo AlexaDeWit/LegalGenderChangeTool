@@ -5,20 +5,29 @@ import           Protolude                      ( ($)
                                                 , Either(..)
                                                 , fmap
                                                 )
+import           Data.Aeson                     ( ToJSON
+                                                , encode
+                                                )
+import           Control.Arrow                  ( (<<<) )
 import           Data.ByteString                ( ByteString )
+import           Data.ByteString.Lazy           ( toStrict )
 import           Data.Text.Short                ( fromText
                                                 , toText
                                                 )
+import           Jose.Jwa                       ( JwsAlg(HS512) )
+import           Jose.Jwt                       ( JwtError
+                                                , unJwt
+                                                )
+import           Jose.Jws                       ( hmacEncode )
 import           Data.Text.Encoding             ( encodeUtf8
+                                                , decodeUtf8
                                                 )
 import           Crypto.Argon2                  ( verifyEncoded
                                                 , hashEncoded
                                                 , defaultHashOptions
                                                 , Argon2Status
                                                 )
-import           Types                          ( RawPassword(..)
-                                                , HashedPassword(..)
-                                                )
+import           Types
 
 hashPassword :: ByteString -> RawPassword -> Either Argon2Status HashedPassword
 hashPassword salt (RawPassword pass) =
@@ -29,3 +38,8 @@ hashPassword salt (RawPassword pass) =
 verifyPassword :: HashedPassword -> RawPassword -> Argon2Status
 verifyPassword (HashedPassword pass) (RawPassword raw) =
   verifyEncoded (fromText pass) (encodeUtf8 raw)
+
+signJwt :: ToJSON a => SigningKey -> a -> Either JwtError SessionToken
+signJwt (SigningKey k) a =
+  (SessionToken <<< Base64Content <<< decodeUtf8 <<< unJwt)
+    <$> hmacEncode HS512 k (toStrict $ encode a)

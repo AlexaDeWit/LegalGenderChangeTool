@@ -74,6 +74,9 @@ declareClassy [d|
     | Complete
     deriving (Eq, Show, Generic)
 
+  newtype SessionToken = SessionToken { sessionTokenBase64Content :: Base64Content }
+    deriving (Eq, Show, Generic)
+
   |]
 
 data AppState = AppState

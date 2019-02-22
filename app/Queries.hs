@@ -32,7 +32,8 @@ findUserByUsername = Statement sqlS encoder decoder True
     where
         sqlS :: ByteString
         sqlS =  
-            [s|SELECT
+            [s|
+                SELECT
                     "userUuid",
                     "userUsername",
                     "userHashedPassword",
@@ -41,7 +42,8 @@ findUserByUsername = Statement sqlS encoder decoder True
                 FROM
                     "users"
                 WHERE
-                    "userUsername"=$1 |]
+                    "userUsername"=$1
+            |]
         encoder = HE.param usernameValue
         decoder = 
             HD.rowMaybe
